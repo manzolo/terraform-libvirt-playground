@@ -20,6 +20,7 @@ dominio libvirt.
 |----------|---------|-------------|
 | [`centos7/`](centos7/) | base | Tutto ai valori di default: un volume dall'immagine cloud ufficiale, 2 vCPU / 2 GB, DHCP sulla rete `default`, cloud-init minimale (utente + chiave SSH) |
 | [`ubuntu2604/`](ubuntu2604/) | avanzato | Ubuntu 26.04 LTS con i parametri personalizzati: disco overlay copy-on-write espanso a 20 GiB, CPU host-passthrough, qemu-guest-agent, MAC fisso, autostart, headless, utente/timezone/pacchetti custom, dimensioni configurabili via variabili |
+| [`multivm/`](multivm/) | multi-VM | Cluster Ubuntu di 3 nodi su una rete NAT dedicata (`10.17.3.0/24`) con reservation DHCP statiche e DNS locale — i nodi si raggiungono per nome; si scala modificando una sola variabile mappa |
 
 Il README di ogni progetto spiega le scelte fatte; la [documentazione](#documentazione)
 spiega i concetti.
@@ -36,6 +37,7 @@ Percorso guidato ai concetti, in ordine (in inglese):
 3. [Rete e storage](docs/03-networking-and-storage.md) — la rete NAT `default`, i lease DHCP, pool, volumi e overlay COW
 4. [Troubleshooting](docs/04-troubleshooting.md) — ogni errore incontrato davvero costruendo questo repo, con relativa soluzione
 5. [CI con GitHub Actions](docs/05-ci-github-actions.md) — lint/validate a ogni push, e vere VM KVM avviate sui runner GitHub
+6. [Cluster multi-VM e reti custom](docs/06-multi-vm-networking.md) — reti dedicate, reservation DHCP statiche con DNS, e scalabilità con `for_each`
 
 ## Avvio rapido
 

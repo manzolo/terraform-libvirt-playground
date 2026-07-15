@@ -19,6 +19,7 @@ create the volume in a storage pool, define and boot the libvirt domain.
 |-----------|-------|-------------|
 | [`centos7/`](centos7/) | basics | Everything at defaults: one volume from the official cloud image, 2 vCPU / 2 GB, DHCP on the `default` network, minimal cloud-init (user + SSH key) |
 | [`ubuntu2604/`](ubuntu2604/) | advanced | Ubuntu 26.04 LTS with the knobs turned: copy-on-write overlay disk grown to 20 GiB, host-passthrough CPU, qemu-guest-agent, fixed MAC, autostart, headless, custom user/timezone/packages, everything sized via variables |
+| [`multivm/`](multivm/) | multi-VM | A 3-node Ubuntu cluster on a dedicated NAT network (`10.17.3.0/24`) with static DHCP reservations and local DNS — nodes reach each other by name; scale it by editing one map variable |
 
 Each project's README explains its choices; the [docs](#documentation) explain the concepts.
 
@@ -34,6 +35,7 @@ Guided tour of the concepts, in order:
 3. [Networking and storage](docs/03-networking-and-storage.md) — the NAT `default` network, DHCP leases, pools, volumes and COW overlays
 4. [Troubleshooting](docs/04-troubleshooting.md) — every error actually hit while building this repo, with fixes
 5. [CI with GitHub Actions](docs/05-ci-github-actions.md) — lint/validate on push, and booting real KVM VMs on GitHub runners
+6. [Multi-VM clusters and custom networks](docs/06-multi-vm-networking.md) — dedicated networks, static DHCP reservations with DNS, and scaling with `for_each`
 
 ## Quick start
 

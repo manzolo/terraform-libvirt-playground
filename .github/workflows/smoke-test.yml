@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [centos7, ubuntu2604]
+        project: [centos7, ubuntu2604, multivm]
     name: ${{ matrix.project }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -61,6 +61,23 @@ jobs:
           echo "::error::VM never became reachable over SSH"
           sudo virsh -c qemu:///system list --all
           exit 1
+
+      # Projects can expose an optional 'smoke_check' output: a command to run
+      # inside the VM (e.g. multivm pings every node by hostname to prove the
+      # lab network's DNS works).
+      - name: Project-specific checks
+        run: |
+          CHECK="$(sudo terraform -chdir=${{ matrix.project }} output -raw smoke_check 2>/dev/null || true)"
+          if [ -z "$CHECK" ]; then
+            echo "No smoke_check output declared, skipping"
+            exit 0
+          fi
+          DEST="$(sudo terraform -chdir=${{ matrix.project }} output -raw ssh_command | awk '{print $NF}')"
+          echo "Running inside $DEST: $CHECK"
+          ssh -i ~/.ssh/id_rsa \
+              -o StrictHostKeyChecking=no \
+              -o UserKnownHostsFile=/dev/null \
+              "$DEST" "$CHECK"
 
       - name: terraform destroy
         if: always()

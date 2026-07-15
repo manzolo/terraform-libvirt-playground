@@ -41,9 +41,11 @@ Design choices worth copying:
   target from scratch every time, so regressions in the docs/tooling surface here
   first. Two real bugs (missing `mkisofs`, AppArmor denial) were found exactly
   this way — see [chapter 4](04-troubleshooting.md).
-- **A matrix runs every project** (`centos7`, `ubuntu2604`) as independent jobs.
+- **A matrix runs every project** (`centos7`, `ubuntu2604`, `multivm`) as independent jobs.
 - **The SSH check is generic**: it takes user@host from the project's `ssh_command`
-  output, so projects with different usernames need no workflow changes.
+  output, so projects with different usernames need no workflow changes. Projects can
+  additionally declare a `smoke_check` output — a command the workflow runs inside the
+  VM (multivm uses it to ping every node by hostname).
 - **Retry loop for SSH** — the VM needs time to boot and run cloud-init; the job
   polls up to 30×10s instead of sleeping a fixed amount.
 - **`timeout-minutes`** as a safety net: a hung `wait_for_lease` would otherwise
@@ -59,4 +61,4 @@ name, image URL 404, broken cloud-init YAML (remember: cloud-init fails *silentl
 missing host packages. The only way to know the repo actually works end-to-end is to
 run it end-to-end — and doing that on a disposable runner is exactly what CI is for.
 
-Back to the [README](../README.md).
+Next: [6. Multi-VM clusters and custom networks](06-multi-vm-networking.md)
