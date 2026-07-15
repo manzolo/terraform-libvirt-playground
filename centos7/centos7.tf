@@ -14,6 +14,12 @@ provider "libvirt" {
   # uri = "qemu+ssh://root@192.168.100.10/system"
 }
 
+variable "ssh_public_key_file" {
+  description = "SSH public key injected into the VM via cloud-init"
+  type        = string
+  default     = "~/.ssh/id_rsa.pub"
+}
+
 # VM root disk, backed by the official CentOS 7 cloud image
 resource "libvirt_volume" "centos7_qcow2" {
   name   = "centos7.qcow2"
@@ -23,14 +29,26 @@ resource "libvirt_volume" "centos7_qcow2" {
   format = "qcow2"
 }
 
+# Cloud-init seed disk: creates the 'centos' user with your SSH key
+resource "libvirt_cloudinit_disk" "centos7_init" {
+  name = "centos7-init.iso"
+  pool = "hd_pool"
+  user_data = templatefile("${path.module}/cloud_init.cfg", {
+    ssh_key = trimspace(file(pathexpand(var.ssh_public_key_file)))
+  })
+}
+
 # KVM domain (the VM itself)
 resource "libvirt_domain" "centos7" {
   name   = "centos7"
   memory = 2048
   vcpu   = 2
 
+  cloudinit = libvirt_cloudinit_disk.centos7_init.id
+
   network_interface {
-    network_name = "default" # list networks with: virsh net-list
+    network_name   = "default" # list networks with: virsh net-list
+    wait_for_lease = true      # block until the VM gets a DHCP lease, so we can output its IP
   }
 
   disk {
@@ -48,5 +66,14 @@ resource "libvirt_domain" "centos7" {
     listen_type = "address"
     autoport    = true
   }
+}
+
+output "vm_ip" {
+  description = "IP address leased to the VM on the default network"
+  value       = try(libvirt_domain.centos7.network_interface[0].addresses[0], null)
+}
+
+output "ssh_command" {
+  value = try("ssh centos@${libvirt_domain.centos7.network_interface[0].addresses[0]}", null)
 }
 

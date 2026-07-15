@@ -12,7 +12,7 @@ create the volume in a storage pool, define and boot the libvirt domain.
 
 | Directory | Description |
 |-----------|-------------|
-| [`centos7/`](centos7/) | A CentOS 7 VM (2 vCPU, 2 GB RAM) built from the official GenericCloud qcow2 image, attached to the `default` libvirt network, with serial console and SPICE graphics |
+| [`centos7/`](centos7/) | A CentOS 7 VM (2 vCPU, 2 GB RAM) built from the official GenericCloud qcow2 image, attached to the `default` libvirt network, with serial console, SPICE graphics and cloud-init provisioning (user + SSH key) |
 
 > **Note:** CentOS 7 reached end-of-life on June 30, 2024. This project is kept as a
 > reference/playground — swap the image `source` for a current distro (AlmaLinux, Rocky,
@@ -36,9 +36,19 @@ terraform plan
 terraform apply
 ```
 
-Connect to the VM:
+By default cloud-init injects `~/.ssh/id_rsa.pub` for the `centos` user; point it at a
+different key with:
 
 ```bash
+terraform apply -var ssh_public_key_file=~/.ssh/id_ed25519.pub
+```
+
+Connect to the VM — `apply` waits for the DHCP lease and prints the IP as an output:
+
+```bash
+# SSH (key-based, user 'centos' with passwordless sudo)
+$(terraform output -raw ssh_command)
+
 # Serial console (exit with Ctrl+])
 virsh console centos7
 
@@ -56,9 +66,10 @@ terraform destroy
 
 - The provider talks to the local hypervisor via `uri = "qemu:///system"`. To manage a **remote**
   host, switch the URI to `qemu+ssh://user@host/system` (commented example in the `.tf` file).
-- The cloud image ships without a default password. To actually log in you'll want to attach a
-  cloud-init disk (`libvirt_cloudinit_disk` resource) with your SSH key — left as the natural
-  next experiment for this playground.
+- The cloud image ships without a default password, so login is handled by cloud-init: a
+  `libvirt_cloudinit_disk` seed ISO ([`cloud_init.cfg`](centos7/cloud_init.cfg)) creates the
+  `centos` user with your SSH public key, passwordless sudo and root-partition auto-grow.
+  Password authentication stays disabled.
 - State files (`terraform.tfstate`) are intentionally git-ignored.
 
 ## License
