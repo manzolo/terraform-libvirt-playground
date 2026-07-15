@@ -18,16 +18,49 @@ create the volume in a storage pool, define and boot the libvirt domain.
 > reference/playground — swap the image `source` for a current distro (AlmaLinux, Rocky,
 > Ubuntu cloud images) for real use.
 
-## Prerequisites
+## Quick start
+
+On Debian/Ubuntu everything is automated by the [Makefile](Makefile):
+
+```bash
+make setup    # one-time: installs KVM/libvirt + Terraform, enables the default
+              # network, creates the hd_pool storage pool, adds you to the libvirt group
+make apply    # create the VM
+make ssh      # log in as 'centos'
+make destroy  # tear it down
+```
+
+All targets (see `make help`):
+
+| Target | Description |
+|--------|-------------|
+| `setup` | Install prerequisites and prepare libvirt (network, storage pool, group) |
+| `pool` | Create just the `hd_pool` storage pool if missing |
+| `init` / `fmt` / `validate` / `plan` / `apply` / `destroy` | The usual Terraform lifecycle |
+| `ip` | Print the VM's IP address |
+| `ssh` | SSH into the VM |
+| `console` | Attach to the serial console (exit with `Ctrl+]`) |
+| `viewer` | Open the SPICE graphical console |
+| `clean` | Remove local Terraform artifacts (does **not** destroy the VM) |
+
+Targets operate on `centos7/` by default; select another project with
+`make apply PROJECT=<dir>`.
+
+> After `make setup`, log out and back in (or run `newgrp libvirt`) so the
+> `libvirt` group membership takes effect.
+
+## Prerequisites (manual route)
+
+If you'd rather not use `make setup`:
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) ≥ 1.0
 - A working libvirt/KVM setup (`qemu-kvm`, `libvirt-daemon-system`, `virsh`)
 - Your user in the `libvirt` group (or run against `qemu:///system` with proper polkit rules)
 - A storage pool named `hd_pool` (check with `virsh pool-list`; adjust `pool` in the `.tf` file
-  to match yours, e.g. `default`)
+  to match yours, e.g. `default` — or run `make pool`)
 - The `default` libvirt network active (`virsh net-list`)
 
-## Usage
+## Usage with plain Terraform
 
 ```bash
 cd centos7
