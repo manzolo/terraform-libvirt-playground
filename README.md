@@ -1,5 +1,8 @@
 # terraform-libvirt-playground
 
+[![CI](https://github.com/manzolo/terraform-libvirt-playground/actions/workflows/ci.yml/badge.svg)](https://github.com/manzolo/terraform-libvirt-playground/actions/workflows/ci.yml)
+[![Smoke test (KVM)](https://github.com/manzolo/terraform-libvirt-playground/actions/workflows/smoke-test.yml/badge.svg)](https://github.com/manzolo/terraform-libvirt-playground/actions/workflows/smoke-test.yml)
+
 Terraform experiments for provisioning local KVM/QEMU virtual machines through the
 [dmacvicar/libvirt](https://registry.terraform.io/providers/dmacvicar/libvirt/latest) provider —
 infrastructure-as-code on your own workstation, no cloud account required.
@@ -94,6 +97,20 @@ Tear everything down:
 ```bash
 terraform destroy
 ```
+
+## CI
+
+Two GitHub Actions workflows live in [`.github/workflows/`](.github/workflows/):
+
+- **CI** ([`ci.yml`](.github/workflows/ci.yml)) — runs on every push and PR: `terraform fmt
+  -check`, then `terraform validate` and [tflint](https://github.com/terraform-linters/tflint)
+  on every project directory. Fast, no credentials needed.
+- **Smoke test (KVM)** ([`smoke-test.yml`](.github/workflows/smoke-test.yml)) — manual trigger
+  only (`workflow_dispatch`, run it from the Actions tab or with `gh workflow run
+  smoke-test.yml`). GitHub's Linux runners expose `/dev/kvm`, so this does the real thing end
+  to end: `make setup` on a blank runner, `terraform apply`, SSH into the freshly booted VM to
+  verify cloud-init, then `terraform destroy`. It downloads the ~900 MB cloud image, so expect
+  ~10-15 minutes.
 
 ## Notes
 

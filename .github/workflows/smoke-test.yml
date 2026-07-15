@@ -1,0 +1,57 @@
+name: Smoke test (KVM)
+
+# Full end-to-end test: 'make setup' on a blank runner, real 'terraform apply'
+# against libvirt (GitHub's ubuntu runners expose /dev/kvm), SSH into the VM,
+# then destroy. Slow (~10-15 min, downloads the ~900 MB cloud image), so it
+# only runs on manual trigger.
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check KVM is available
+        run: |
+          ls -l /dev/kvm
+          sudo chmod 666 /dev/kvm
+
+      - name: make setup
+        run: make setup
+
+      - name: Generate throwaway SSH key
+        run: ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
+
+      - name: terraform apply
+        run: |
+          sudo terraform -chdir=centos7 init -input=false
+          sudo terraform -chdir=centos7 apply -auto-approve \
+            -var ssh_public_key_file="$HOME/.ssh/id_rsa.pub"
+
+      - name: SSH into the VM
+        run: |
+          IP="$(sudo terraform -chdir=centos7 output -raw vm_ip)"
+          echo "VM IP: $IP"
+          for i in $(seq 1 30); do
+            if ssh -i ~/.ssh/id_rsa \
+                   -o StrictHostKeyChecking=no \
+                   -o UserKnownHostsFile=/dev/null \
+                   -o ConnectTimeout=5 \
+                   centos@"$IP" 'cat /etc/redhat-release && sudo -n true && echo CLOUD-INIT-OK'; then
+              exit 0
+            fi
+            echo "Attempt $i/30: SSH not ready yet, retrying in 10s..."
+            sleep 10
+          done
+          echo "::error::VM never became reachable over SSH"
+          sudo virsh -c qemu:///system list --all
+          exit 1
+
+      - name: terraform destroy
+        if: always()
+        run: |
+          sudo terraform -chdir=centos7 destroy -auto-approve \
+            -var ssh_public_key_file="$HOME/.ssh/id_rsa.pub" || true

@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    name: fmt / validate / tflint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - uses: terraform-linters/setup-tflint@v4
+
+      - name: terraform fmt
+        run: terraform fmt -check -diff -recursive
+
+      - name: terraform validate + tflint (all projects)
+        run: |
+          set -euo pipefail
+          for dir in $(find . -name '*.tf' -not -path '*/.terraform/*' -printf '%h\n' | sort -u); do
+            echo "::group::${dir}"
+            terraform -chdir="$dir" init -backend=false -input=false
+            terraform -chdir="$dir" validate
+            (cd "$dir" && tflint --format=compact)
+            echo "::endgroup::"
+          done
