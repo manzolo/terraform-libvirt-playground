@@ -16,7 +16,8 @@ help: ## Show this help
 
 setup: ## Install prerequisites (Debian/Ubuntu): KVM/libvirt, Terraform, group, default network + storage pool
 	sudo apt-get update
-	sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients virtinst virt-viewer
+	sudo apt-get install -y qemu-kvm libvirt-daemon-system libvirt-clients virtinst virt-viewer genisoimage
+	@command -v mkisofs >/dev/null 2>&1 || sudo ln -s "$$(command -v genisoimage)" /usr/local/bin/mkisofs
 	@command -v terraform >/dev/null 2>&1 || { \
 		echo "==> Installing Terraform from the HashiCorp apt repository"; \
 		wget -qO- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg; \

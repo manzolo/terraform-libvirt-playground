@@ -58,6 +58,8 @@ If you'd rather not use `make setup`:
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) ≥ 1.0
 - A working libvirt/KVM setup (`qemu-kvm`, `libvirt-daemon-system`, `virsh`)
+- `mkisofs` for building the cloud-init seed ISO (on Debian/Ubuntu: `apt install genisoimage`,
+  then symlink it: `ln -s $(command -v genisoimage) /usr/local/bin/mkisofs`)
 - Your user in the `libvirt` group (or run against `qemu:///system` with proper polkit rules)
 - A storage pool named `hd_pool` (check with `virsh pool-list`; adjust `pool` in the `.tf` file
   to match yours, e.g. `default` — or run `make pool`)
