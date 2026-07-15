@@ -22,6 +22,14 @@ jobs:
       - name: make setup
         run: make setup
 
+      # On the runner, AppArmor blocks qemu from opening volumes in the custom
+      # pool ('Permission denied' on the qcow2). Disabling the libvirt security
+      # driver is fine for a throwaway CI VM — don't do this on a real host.
+      - name: Disable libvirt security driver (CI only)
+        run: |
+          echo 'security_driver = "none"' | sudo tee -a /etc/libvirt/qemu.conf
+          sudo systemctl restart libvirtd
+
       - name: Generate throwaway SSH key
         run: ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
 
