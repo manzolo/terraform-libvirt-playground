@@ -2,13 +2,17 @@ name: Smoke test (KVM)
 
 # Full end-to-end test: 'make setup' on a blank runner, real 'terraform apply'
 # against libvirt (GitHub's ubuntu runners expose /dev/kvm), SSH into the VM,
-# then destroy. Slow (~10-15 min, downloads the ~900 MB cloud image), so it
-# only runs on manual trigger.
+# then destroy. One job per project via the matrix. Runs on manual trigger only.
 on:
   workflow_dispatch:
 
 jobs:
   smoke-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [centos7, ubuntu2604]
+    name: ${{ matrix.project }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -35,20 +39,20 @@ jobs:
 
       - name: terraform apply
         run: |
-          sudo terraform -chdir=centos7 init -input=false
-          sudo terraform -chdir=centos7 apply -auto-approve \
+          sudo terraform -chdir=${{ matrix.project }} init -input=false
+          sudo terraform -chdir=${{ matrix.project }} apply -auto-approve \
             -var ssh_public_key_file="$HOME/.ssh/id_rsa.pub"
 
       - name: SSH into the VM
         run: |
-          IP="$(sudo terraform -chdir=centos7 output -raw vm_ip)"
-          echo "VM IP: $IP"
+          DEST="$(sudo terraform -chdir=${{ matrix.project }} output -raw ssh_command | awk '{print $NF}')"
+          echo "SSH destination: $DEST"
           for i in $(seq 1 30); do
             if ssh -i ~/.ssh/id_rsa \
                    -o StrictHostKeyChecking=no \
                    -o UserKnownHostsFile=/dev/null \
                    -o ConnectTimeout=5 \
-                   centos@"$IP" 'cat /etc/redhat-release && sudo -n true && echo CLOUD-INIT-OK'; then
+                   "$DEST" 'grep PRETTY_NAME /etc/os-release && sudo -n true && echo CLOUD-INIT-OK'; then
               exit 0
             fi
             echo "Attempt $i/30: SSH not ready yet, retrying in 10s..."
@@ -61,5 +65,5 @@ jobs:
       - name: terraform destroy
         if: always()
         run: |
-          sudo terraform -chdir=centos7 destroy -auto-approve \
+          sudo terraform -chdir=${{ matrix.project }} destroy -auto-approve \
             -var ssh_public_key_file="$HOME/.ssh/id_rsa.pub" || true

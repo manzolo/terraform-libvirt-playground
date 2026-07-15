@@ -3,6 +3,8 @@
 [![CI](https://github.com/manzolo/terraform-libvirt-playground/actions/workflows/ci.yml/badge.svg)](https://github.com/manzolo/terraform-libvirt-playground/actions/workflows/ci.yml)
 [![Smoke test (KVM)](https://github.com/manzolo/terraform-libvirt-playground/actions/workflows/smoke-test.yml/badge.svg)](https://github.com/manzolo/terraform-libvirt-playground/actions/workflows/smoke-test.yml)
 
+🇬🇧 English · [🇮🇹 Italiano](README.it.md)
+
 Terraform experiments for provisioning local KVM/QEMU virtual machines through the
 [dmacvicar/libvirt](https://registry.terraform.io/providers/dmacvicar/libvirt/latest) provider —
 infrastructure-as-code on your own workstation, no cloud account required.
@@ -11,15 +13,27 @@ The goal: describe a VM (disk image, CPU/RAM, network, console) in a single `.tf
 `terraform apply` do everything `virt-install` would do by hand — download the cloud image,
 create the volume in a storage pool, define and boot the libvirt domain.
 
-## Projects
+## Projects — a two-step learning path
 
-| Directory | Description |
-|-----------|-------------|
-| [`centos7/`](centos7/) | A CentOS 7 VM (2 vCPU, 2 GB RAM) built from the official GenericCloud qcow2 image, attached to the `default` libvirt network, with serial console, SPICE graphics and cloud-init provisioning (user + SSH key) |
+| Directory | Level | Description |
+|-----------|-------|-------------|
+| [`centos7/`](centos7/) | basics | Everything at defaults: one volume from the official cloud image, 2 vCPU / 2 GB, DHCP on the `default` network, minimal cloud-init (user + SSH key) |
+| [`ubuntu2604/`](ubuntu2604/) | advanced | Ubuntu 26.04 LTS with the knobs turned: copy-on-write overlay disk grown to 20 GiB, host-passthrough CPU, qemu-guest-agent, fixed MAC, autostart, headless, custom user/timezone/packages, everything sized via variables |
 
-> **Note:** CentOS 7 reached end-of-life on June 30, 2024. This project is kept as a
-> reference/playground — swap the image `source` for a current distro (AlmaLinux, Rocky,
-> Ubuntu cloud images) for real use.
+Each project's README explains its choices; the [docs](#documentation) explain the concepts.
+
+> **Note:** CentOS 7 reached end-of-life on June 30, 2024. That project is kept as a
+> minimal reference — start from `ubuntu2604/` for anything real.
+
+## Documentation
+
+Guided tour of the concepts, in order:
+
+1. [Terraform + libvirt: how the pieces fit together](docs/01-terraform-libvirt-basics.md) — the stack, the lifecycle, state, and why provider versions are pinned
+2. [Cloud images and cloud-init](docs/02-cloud-init.md) — why there's no ISO installer, the NoCloud seed ISO, user-data anatomy, debugging
+3. [Networking and storage](docs/03-networking-and-storage.md) — the NAT `default` network, DHCP leases, pools, volumes and COW overlays
+4. [Troubleshooting](docs/04-troubleshooting.md) — every error actually hit while building this repo, with fixes
+5. [CI with GitHub Actions](docs/05-ci-github-actions.md) — lint/validate on push, and booting real KVM VMs on GitHub runners
 
 ## Quick start
 
@@ -110,9 +124,10 @@ Two GitHub Actions workflows live in [`.github/workflows/`](.github/workflows/):
 - **Smoke test (KVM)** ([`smoke-test.yml`](.github/workflows/smoke-test.yml)) — manual trigger
   only (`workflow_dispatch`, run it from the Actions tab or with `gh workflow run
   smoke-test.yml`). GitHub's Linux runners expose `/dev/kvm`, so this does the real thing end
-  to end: `make setup` on a blank runner, `terraform apply`, SSH into the freshly booted VM to
-  verify cloud-init, then `terraform destroy`. It downloads the ~900 MB cloud image, so expect
-  ~10-15 minutes.
+  to end, once per project via a matrix: `make setup` on a blank runner, `terraform apply`,
+  SSH into the freshly booted VM to verify cloud-init, then `terraform destroy`.
+
+Both are dissected in [docs/05-ci-github-actions.md](docs/05-ci-github-actions.md).
 
 ## Notes
 

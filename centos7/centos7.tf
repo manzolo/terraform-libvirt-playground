@@ -3,8 +3,9 @@ terraform {
 
   required_providers {
     libvirt = {
-      source  = "dmacvicar/libvirt"
-      version = "~> 0.7"
+      source = "dmacvicar/libvirt"
+      # ~> 0.7.0 (not ~> 0.7): the provider schema changed completely in 0.8
+      version = "~> 0.7.0"
     }
   }
 }

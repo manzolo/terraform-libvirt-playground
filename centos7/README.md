@@ -3,6 +3,11 @@
 A CentOS 7 KVM virtual machine defined entirely in Terraform via the
 [dmacvicar/libvirt](https://registry.terraform.io/providers/dmacvicar/libvirt/latest) provider.
 
+This is the **basics** project of the playground: everything stays at defaults, so the
+`.tf` file reads top-to-bottom as an introduction. Concepts are explained in the
+[docs](../docs/01-terraform-libvirt-basics.md); the knobs-turned counterpart is
+[`ubuntu2604/`](../ubuntu2604/).
+
 > CentOS 7 is EOL since June 2024 — this is a playground/reference. Swap the image `source`
 > for AlmaLinux, Rocky or an Ubuntu cloud image for real use.
 
